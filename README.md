@@ -1,4 +1,4 @@
-# reedSolomon
+# ReedSolomonErasureCoding
 A small C implementation of Reed-Solomon erasure coding
 
 [Reed-Solomon](https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction) is an error-correcting code that enables recovery of lost data from redundant parity information. Given k data shards and m parity shards, any k of the k+m shards can reconstruct the original data.
@@ -19,7 +19,7 @@ This implementation was created to provide small, portable code for memory const
 ### Encode
 
 ```c
-int rsEncode(
+int rsecEncode(
   const unsigned char *const *d,  /* k data shard pointers */
   unsigned char *const *p,        /* m parity shard pointers (output) */
   unsigned int l,                 /* shard length in bytes */
@@ -33,7 +33,7 @@ Returns 0 on success, -1 on invalid parameters.
 ### Decode
 
 ```c
-int rsDecode(
+int rsecDecode(
   const unsigned char *const *s,  /* k received shard pointers */
   const unsigned char *x,         /* k shard indices (0..k-1 data, k..k+m-1 parity) */
   unsigned char *const *d,        /* k data shard pointers (output) */
@@ -49,7 +49,7 @@ Returns 0 on success, -1 on error. If all k data shards are present, simply copi
 ## Usage
 
 ```c
-#include "reedSolomon.h"
+#include "rsec.h"
 
 unsigned char data[4][64];     /* 4 data shards, 64 bytes each */
 unsigned char parity[2][64];   /* 2 parity shards */
@@ -57,7 +57,7 @@ unsigned char *dp[4] = { data[0], data[1], data[2], data[3] };
 unsigned char *pp[2] = { parity[0], parity[1] };
 
 /* Encode: generate parity from data */
-rsEncode(dp, pp, 64, 4, 2);
+rsecEncode(dp, pp, 64, 4, 2);
 
 /* Later: recover from any 4 of 6 shards */
 unsigned char *received[4];    /* any 4 shards */
@@ -66,7 +66,7 @@ unsigned char recovered[4][64];
 unsigned char *rp[4] = { recovered[0], recovered[1], recovered[2], recovered[3] };
 unsigned char work[RS_WORK_SIZE(4)];
 
-rsDecode(received, indices, rp, 64, 4, 2, work);
+rsecDecode(received, indices, rp, 64, 4, 2, work);
 ```
 
 ## Implementation
