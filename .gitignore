@@ -52,4 +52,5 @@ Mkfile.old
 dkms.conf
 
 # Local Executables
+genGfTables
 rsecTest

@@ -75,6 +75,8 @@ Uses GF(2^8) arithmetic with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x1
 
 Decoding uses Gaussian elimination with O(k^3) complexity for matrix inversion, then O(k * l) for reconstruction.
 
+The lookup tables in rsec.c were generated with genGfTables.c.
+
 ## Applications
 
 - UDP fragment recovery
