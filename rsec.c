@@ -1,15 +1,15 @@
 /*
- * reedSolomon - A small C implementation of Reed-Solomon erasure coding
+ * ReedSolomonErasureCoding - A small C implementation of Reed-Solomon erasure coding
  * Copyright (C) 2025 G. David Butler <gdb@dbSystems.com>
  *
- * This file is part of reedSolomon
+ * This file is part of ReedSolomonErasureCoding
  *
- * reedSolomon is free software: you can redistribute it and/or modify
+ * ReedSolomonErasureCoding is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * reedSolomon is distributed in the hope that it will be useful,
+ * ReedSolomonErasureCoding is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "reedSolomon.h"
+#include "rsec.h"
 
 /*
  * GF(2^8) with primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11d)
@@ -109,7 +109,7 @@ gfInv(
 }
 
 int
-rsEncode(
+rsecEncode(
   const unsigned char *const *d
  ,unsigned char *const *p
  ,unsigned int l
@@ -154,7 +154,7 @@ rsEncode(
 }
 
 int
-rsDecode(
+rsecDecode(
   const unsigned char *const *s
  ,const unsigned char *x
  ,unsigned char *const *d

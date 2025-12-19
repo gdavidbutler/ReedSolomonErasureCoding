@@ -1,15 +1,15 @@
 CFLAGS=-I. -Os -g
 
-all: testRs
+all: rsecTest
 
 clobber: clean
-	rm -f testRs
+	rm -f rsecTest
 
 clean:
-	rm -f reedSolomon.o
+	rm -f rsec.o
 
-testRs: test/testRs.c reedSolomon.o
-	$(CC) $(CFLAGS) -o testRs test/testRs.c reedSolomon.o
+rsecTest: test/rsecTest.c rsec.o
+	$(CC) $(CFLAGS) -o rsecTest test/rsecTest.c rsec.o
 
-reedSolomon.o: reedSolomon.c reedSolomon.h
-	$(CC) $(CFLAGS) -c reedSolomon.c
+rsec.o: rsec.c rsec.h
+	$(CC) $(CFLAGS) -c rsec.c

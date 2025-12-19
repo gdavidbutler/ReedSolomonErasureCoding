@@ -1,15 +1,15 @@
 /*
- * reedSolomon - A small C implementation of Reed-Solomon erasure coding
+ * ReedSolomonErasureCoding - A small C implementation of Reed-Solomon erasure coding
  * Copyright (C) 2025 G. David Butler <gdb@dbSystems.com>
  *
- * This file is part of reedSolomon
+ * This file is part of ReedSolomonErasureCoding
  *
- * reedSolomon is free software: you can redistribute it and/or modify
+ * ReedSolomonErasureCoding is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * reedSolomon is distributed in the hope that it will be useful,
+ * ReedSolomonErasureCoding is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "reedSolomon.h"
+#include "rsec.h"
 
 int
 main(
@@ -55,7 +55,7 @@ main(
 
   /* Encode */
   printf("Encoding 4 data shards into 2 parity shards...\n");
-  Err = rsEncode(Dp, Pp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]));
+  Err = rsecEncode(Dp, Pp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]));
   if (Err) {
     printf("Encode failed: %d\n", Err);
     return (1);
@@ -84,7 +84,7 @@ main(
   Sp[2] = Data[2]; Idx[2] = 2;
   Sp[3] = Data[3]; Idx[3] = 3;
   memset(Recovered, 0, sizeof (Recovered));
-  Err = rsDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
+  Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
   if (Err) {
     printf("Decode failed: %d\n", Err);
     return (1);
@@ -101,7 +101,7 @@ main(
   Sp[2] = Data[2];   Idx[2] = 2;
   Sp[3] = Data[3];   Idx[3] = 3;
   memset(Recovered, 0, sizeof (Recovered));
-  Err = rsDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
+  Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
   if (Err) {
     printf("Decode failed: %d\n", Err);
     return (1);
@@ -125,7 +125,7 @@ main(
   Sp[2] = Data[2];   Idx[2] = 2;
   Sp[3] = Data[3];   Idx[3] = 3;
   memset(Recovered, 0, sizeof (Recovered));
-  Err = rsDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
+  Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
   if (Err) {
     printf("Decode failed: %d\n", Err);
     return (1);
@@ -149,7 +149,7 @@ main(
   Sp[2] = Data[2];   Idx[2] = 2;
   Sp[3] = Parity[1]; Idx[3] = 5;
   memset(Recovered, 0, sizeof (Recovered));
-  Err = rsDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
+  Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Dp) / sizeof (Dp[0]), sizeof (Pp) / sizeof (Pp[0]), Work);
   if (Err) {
     printf("Decode failed: %d\n", Err);
     return (1);
@@ -169,7 +169,7 @@ main(
   /* Test 5: m=1 XOR fast path */
   printf("\nTest 5: m=1 (XOR fast path) encode and decode\n");
   Pp[0] = Parity[0];
-  Err = rsEncode(Dp, Pp, 16, 4, 1);
+  Err = rsecEncode(Dp, Pp, 16, 4, 1);
   if (Err) {
     printf("Encode failed: %d\n", Err);
     return (1);
@@ -193,7 +193,7 @@ main(
   Sp[2] = Parity[0]; Idx[2] = 4;
   Sp[3] = Data[3];   Idx[3] = 3;
   memset(Recovered, 0, sizeof (Recovered));
-  Err = rsDecode(Sp, Idx, Rp, 16, 4, 1, Work);
+  Err = rsecDecode(Sp, Idx, Rp, 16, 4, 1, Work);
   if (Err) {
     printf("Decode failed: %d\n", Err);
     return (1);
