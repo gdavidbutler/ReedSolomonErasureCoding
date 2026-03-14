@@ -77,6 +77,66 @@ Decoding uses Gaussian elimination with O(k^3) complexity for matrix inversion, 
 
 The lookup tables in rsec.c were generated with genGfTables.c.
 
+### Data Padding
+
+RS encoding requires data to be split into k equal-length shards. If the original data length is not a multiple of k, it must be padded. After decoding, the original length is not preserved by RS itself. The application is responsible for recovering the original length, for example by using a self-describing format (e.g., compression with an embedded length), a length prefix, or out-of-band metadata.
+
+## Merkle Tree Authentication
+
+`rsecMk.h` provides Merkle tree operations for authenticating individual shards. Each shard can be independently verified against a root hash using a compact proof, without needing all other shards.
+
+The hash function is pluggable via `rsecMkHsh_t`, which provides allocate, initialize, update, finalize, and deallocate callbacks plus a hash size parameter h (hash is 2^h bytes).
+
+### Build Tree
+
+```c
+unsigned char *rsecMkHash(
+  const rsecMkHsh_t *h,
+  const unsigned char *const *s,  /* n shard data pointers */
+  unsigned int l,                 /* shard length in bytes */
+  unsigned int n,                 /* number of shards (1..256) */
+  unsigned char *w                /* work area (rsecMkWaSz bytes) */
+);
+```
+
+Returns pointer to root hash in work area, 0 on error. Internally pads to next power of 2 with zero hashes.
+
+### Extract Proof
+
+```c
+unsigned char *rsecMkProof(
+  const rsecMkHsh_t *h,
+  unsigned int n,                 /* number of shards */
+  unsigned int i,                 /* shard index (0..n-1) */
+  const unsigned char *w,         /* work area (from rsecMkHash) */
+  unsigned char *p                /* proof output (rsecMkPfSz bytes) */
+);
+```
+
+Returns pointer past proof, 0 on error. Proof size is ceil(log2(n)) hashes.
+
+### Verify Shard
+
+```c
+unsigned char *rsecMkExtract(
+  const rsecMkHsh_t *h,
+  const unsigned char *s,         /* shard data */
+  unsigned int l,                 /* shard length */
+  unsigned int i,                 /* shard index */
+  unsigned int n,                 /* total shards */
+  const unsigned char *p,         /* proof (rsecMkPfSz bytes) */
+  unsigned char *w                /* work area (rsecMkVfSz bytes) */
+);
+```
+
+Returns pointer to computed root hash in work area, 0 on error. Caller compares returned hash with expected root.
+
+### Size Functions
+
+- `rsecMkWaSz(h, n)` - work area for tree construction
+- `rsecMkPfSz(h, n)` - proof size per shard
+- `rsecMkVfSz(h)` - work area for verification
+
 ## Applications
 
 - UDP fragment recovery
