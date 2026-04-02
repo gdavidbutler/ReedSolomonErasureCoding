@@ -79,34 +79,13 @@ static const unsigned char GfLog[256] = {
 };
 
 /* GF(2^8) multiplication */
-static unsigned char
-gfMul(
-  unsigned char a
- ,unsigned char b
-){
-  if (a == 0 || b == 0)
-    return (0);
-  return (GfExp[GfLog[a] + GfLog[b]]);
-}
+#define gfMul(a, b) ((a) == 0 || (b) == 0 ? (unsigned char)0 : GfExp[GfLog[(a)] + GfLog[(b)]])
 
 /* GF(2^8) division */
-static unsigned char
-gfDiv(
-  unsigned char a
- ,unsigned char b
-){
-  if (a == 0 || b == 0)
-    return (0);
-  return (GfExp[GfLog[a] + 255 - GfLog[b]]);
-}
+#define gfDiv(a, b) ((a) == 0 || (b) == 0 ? (unsigned char)0 : GfExp[GfLog[(a)] + 255 - GfLog[(b)]])
 
 /* GF(2^8) inverse */
-static unsigned char
-gfInv(
-  unsigned char a
-){
-  return (GfExp[255 - GfLog[a]]);
-}
+#define gfInv(a) (GfExp[255 - GfLog[(a)]])
 
 int
 rsecEncode(
@@ -140,7 +119,7 @@ rsecEncode(
   for (i = 0; i < m; ++i) {
     /* Precompute Cauchy row coefficients */
     for (j = 0; j < k; ++j)
-      coef[j] = gfDiv(1, (unsigned char)((k + i) ^ j));
+      coef[j] = gfInv((unsigned char)((k + i) ^ j));
     /* For each byte position */
     for (b = 0; b < l; ++b) {
       c = 0;
@@ -170,6 +149,8 @@ rsecDecode(
   unsigned char ri;
   unsigned char *M;
   unsigned char *Inv;
+  unsigned char *Mr;
+  unsigned char *Ir;
   unsigned char t;
   unsigned char piv;
 
@@ -202,30 +183,34 @@ rsecDecode(
   /* Build submatrix from received shard indices */
   for (i = 0; i < k; ++i) {
     ri = x[i];
+    Mr = M + i * k;
     for (j = 0; j < k; ++j) {
       if (ri < k) {
         /* Identity row */
-        M[i * k + j] = (ri == j) ? 1 : 0;
+        Mr[j] = (ri == j) ? 1 : 0;
       } else if (m == 1) {
         /* XOR parity row (m=1 fast path) */
-        M[i * k + j] = 1;
+        Mr[j] = 1;
       } else {
         /* Cauchy parity row: 1 / (ri ^ j) */
-        M[i * k + j] = gfDiv(1, (unsigned char)(ri ^ j));
+        Mr[j] = gfInv((unsigned char)(ri ^ j));
       }
     }
   }
 
   /* Initialize inverse as identity */
   for (i = 0; i < k; ++i) {
+    Ir = Inv + i * k;
     for (j = 0; j < k; ++j)
-      Inv[i * k + j] = (i == j) ? 1 : 0;
+      Ir[j] = (i == j) ? 1 : 0;
   }
 
   /* Gaussian elimination */
   for (i = 0; i < k; ++i) {
+    Mr = M + i * k;
+    Ir = Inv + i * k;
     /* Find pivot */
-    if (M[i * k + i] == 0) {
+    if (Mr[i] == 0) {
       for (r = i + 1; r < k; ++r) {
         if (M[r * k + i] != 0)
           break;
@@ -233,28 +218,34 @@ rsecDecode(
       if (r == k)
         return (-1);
       /* Swap rows */
-      for (j = 0; j < k; ++j) {
-        t = M[i * k + j];
-        M[i * k + j] = M[r * k + j];
-        M[r * k + j] = t;
-        t = Inv[i * k + j];
-        Inv[i * k + j] = Inv[r * k + j];
-        Inv[r * k + j] = t;
+      {
+        unsigned char *Ms = M + r * k;
+        unsigned char *Is = Inv + r * k;
+
+        for (j = 0; j < k; ++j) {
+          t = Mr[j]; Mr[j] = Ms[j]; Ms[j] = t;
+          t = Ir[j]; Ir[j] = Is[j]; Is[j] = t;
+        }
       }
     }
     /* Scale pivot row */
-    piv = gfInv(M[i * k + i]);
+    piv = gfInv(Mr[i]);
     for (j = 0; j < k; ++j) {
-      M[i * k + j] = gfMul(M[i * k + j], piv);
-      Inv[i * k + j] = gfMul(Inv[i * k + j], piv);
+      Mr[j] = gfMul(Mr[j], piv);
+      Ir[j] = gfMul(Ir[j], piv);
     }
     /* Eliminate column */
     for (r = 0; r < k; ++r) {
-      if (r != i && M[r * k + i] != 0) {
-        t = M[r * k + i];
-        for (j = 0; j < k; ++j) {
-          M[r * k + j] ^= gfMul(t, M[i * k + j]);
-          Inv[r * k + j] ^= gfMul(t, Inv[i * k + j]);
+      if (r != i) {
+        unsigned char *Me = M + r * k;
+        unsigned char *Ie = Inv + r * k;
+
+        if (Me[i] != 0) {
+          t = Me[i];
+          for (j = 0; j < k; ++j) {
+            Me[j] ^= gfMul(t, Mr[j]);
+            Ie[j] ^= gfMul(t, Ir[j]);
+          }
         }
       }
     }
@@ -262,10 +253,11 @@ rsecDecode(
 
   /* Reconstruct data shards: d = Inv * s */
   for (i = 0; i < k; ++i) {
+    Ir = Inv + i * k;
     for (b = 0; b < l; ++b) {
       t = 0;
       for (j = 0; j < k; ++j)
-        t ^= gfMul(Inv[i * k + j], s[j][b]);
+        t ^= gfMul(Ir[j], s[j][b]);
       d[i][b] = t;
     }
   }
