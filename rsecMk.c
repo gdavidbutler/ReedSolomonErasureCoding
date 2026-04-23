@@ -20,6 +20,12 @@
 
 #include "rsecMk.h"
 
+/* Domain separation tags: distinguish leaf hash input (arbitrary length s)
+ * from internal-node hash input (2^(h+1) bytes of children). Prefixing
+ * rules out leaf/node confusion from second-preimage attacks. */
+static const unsigned char LeafTag = 0x00;
+static const unsigned char NodeTag = 0x01;
+
 /* next power of 2 >= n, for n in 1..256 */
 static unsigned int
 nextPow2(
@@ -76,8 +82,8 @@ unsigned int
 rsecMkVfSz(
   unsigned char h
 ){
-  /* current hash (2^h) + combined buffer (2^(h+1)) */
-  return (3U << h);
+  /* current hash (2^h) */
+  return (1U << h);
 }
 
 unsigned char *
@@ -104,25 +110,27 @@ rsecMkHash(
   if (!(c = h->a()))
     return (0);
 
-  /* hash real shard leaves */
+  /* hash real shard leaves with LeafTag prefix */
   np = w + p * b;
   for (i = 0; i < n; ++i) {
     h->i(c);
+    h->u(c, &LeafTag, 1);
     h->u(c, s[i], l);
     h->f(c, np);
     np += b;
   }
 
-  /* zero padding leaves */
+  /* zero padding leaves (never addressable via Extract: i >= n is rejected) */
   for (i = n; i < p; ++i)
     for (j = 0; j < b; ++j)
       *np++ = 0;
 
-  /* build tree bottom-up: tree[i] = hash(tree[2i] || tree[2i+1]) */
+  /* build tree bottom-up: tree[i] = H(NodeTag || tree[2i] || tree[2i+1]) */
   np = w + (p - 1) * b;
   cp = np + (p - 1) * b;
   for (i = p - 1; i > 0; --i) {
     h->i(c);
+    h->u(c, &NodeTag, 1);
     h->u(c, cp, b << 1);
     h->f(c, np);
     np -= b;
@@ -178,9 +186,7 @@ rsecMkExtract(
   unsigned int pw;
   unsigned int b;
   unsigned int node;
-  unsigned int j;
   unsigned char *cur;
-  unsigned char *cmb;
   const unsigned char *lo;
   const unsigned char *hi;
 
@@ -190,13 +196,13 @@ rsecMkExtract(
   b = 1U << h->h;
   pw = nextPow2(n);
   cur = w;
-  cmb = w + b;
 
   if (!(c = h->a()))
     return (0);
 
-  /* hash shard data to get leaf hash */
+  /* hash shard data with LeafTag to get leaf hash */
   h->i(c);
+  h->u(c, &LeafTag, 1);
   h->u(c, s, l);
   h->f(c, cur);
 
@@ -208,13 +214,11 @@ rsecMkExtract(
     } else {
       lo = cur; hi = p;   /* left child: sibling is right */
     }
-    for (j = 0; j < b; ++j)
-      cmb[j] = lo[j];
-    for (j = 0; j < b; ++j)
-      cmb[b + j] = hi[j];
     p += b;
     h->i(c);
-    h->u(c, cmb, b << 1);
+    h->u(c, &NodeTag, 1);
+    h->u(c, lo, b);
+    h->u(c, hi, b);
     h->f(c, cur);
     node >>= 1;
   }

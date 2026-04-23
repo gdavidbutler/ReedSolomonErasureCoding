@@ -44,6 +44,9 @@ main(
   unsigned int j;
   unsigned char Expected;
   int Err;
+  int Fail;
+
+  Fail = 0;
 
   /* Setup pointers */
   for (i = 0; i < sizeof (Dp) / sizeof (Dp[0]); ++i)
@@ -91,8 +94,10 @@ main(
   }
   if (memcmp(Recovered, Data, sizeof (Data)) == 0)
     printf("  PASS\n");
-  else
+  else {
     printf("  FAIL\n");
+    Fail = 1;
+  }
 
   /* Test 2: Missing shard 0, use parity 0 */
   printf("\nTest 2: Missing shard 0, use parity 0\n");
@@ -110,6 +115,7 @@ main(
     printf("  PASS\n");
   else {
     printf("  FAIL\n");
+    Fail = 1;
     for (i = 0; i < 4; ++i) {
       printf("  Recovered %u:", i);
       for (j = 0; j < 16; ++j)
@@ -134,6 +140,7 @@ main(
     printf("  PASS\n");
   else {
     printf("  FAIL\n");
+    Fail = 1;
     for (i = 0; i < 4; ++i) {
       printf("  Recovered %u:", i);
       for (j = 0; j < 16; ++j)
@@ -158,6 +165,7 @@ main(
     printf("  PASS\n");
   else {
     printf("  FAIL\n");
+    Fail = 1;
     for (i = 0; i < 4; ++i) {
       printf("  Recovered %u:", i);
       for (j = 0; j < 16; ++j)
@@ -202,6 +210,7 @@ main(
     printf("  PASS\n");
   else {
     printf("  FAIL\n");
+    Fail = 1;
     for (i = 0; i < 4; ++i) {
       printf("  Recovered %u:", i);
       for (j = 0; j < 16; ++j)
@@ -210,6 +219,6 @@ main(
     }
   }
 
-  printf("\nAll tests completed.\n");
-  return (0);
+  printf("\nAll tests completed%s.\n", Fail ? " with FAILURES" : "");
+  return (Fail);
 }

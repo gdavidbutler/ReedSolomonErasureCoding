@@ -26,6 +26,10 @@
  *
  * Arbitrary shard count n (1..256), internally padded to next power of 2.
  * Proof size is ceil(log2(n)) hashes.
+ *
+ * Leaf hash: H(0x00 || shard_data)
+ * Node hash: H(0x01 || left_child || right_child)
+ * The tag byte prefix prevents leaf/node confusion.
  */
 
 /* Hash context for Merkle tree operations */
@@ -97,6 +101,7 @@ rsecMkProof(
 
 /*
  * Extract root hash from shard and Merkle proof.
+ * n must equal the value passed to rsecMkHash and rsecMkProof.
  * Return pointer to root hash in work area, 0 on error.
  * Caller compares returned hash with expected root.
  */

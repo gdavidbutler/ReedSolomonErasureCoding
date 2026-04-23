@@ -21,15 +21,16 @@
 #include <stdio.h>
 
 /*
- * Generate GF(2^8) tables with primitive polynomial 0x11d
+ * Generate GF(2^8) tables with primitive polynomial 0x11d.
+ * Stdout is a drop-in fragment for rsec.c; verification prints to stderr.
  */
 
 int
 main(
   void
 ){
-  unsigned char Exp[512];
-  unsigned char Log[256];
+  unsigned char Exp[512] = {0};
+  unsigned char Log[256] = {0};
   unsigned int x;
   unsigned int i;
   unsigned int j;
@@ -47,22 +48,22 @@ main(
   Exp[255] = Exp[0];
   Log[0] = 0;
 
-  /* Double at offset 255 since α^255 = 1 (group order is 255) */
-  for (i = 0; i < 256; ++i)
+  /* Double the exp table so Exp[Log[a]+Log[b]] works without a mod-255 step.
+   * Loop to 257 (not 256) so Exp[511] is also defined, keeping the full
+   * table reproducible even though index 511 is never read. */
+  for (i = 0; i < 257; ++i)
     Exp[255 + i] = Exp[i];
 
-  /* Verify */
   inv4 = Exp[255 - Log[4]];
   prod = Exp[Log[4] + Log[inv4]];
-  printf("4 = 4, inv(4) = %u, 4 * inv(4) = %u\n\n", inv4, prod);
+  fprintf(stderr, "4 = 4, inv(4) = %u, 4 * inv(4) = %u\n", inv4, prod);
 
   printf("static const unsigned char GfExp[512] = {\n");
   for (i = 0; i < 32; ++i) {
-    printf("  ");
+    printf(i == 0 ? "  " : " ,");
     for (j = 0; j < 16; ++j) {
+      if (j > 0) printf(",");
       printf("0x%02x", Exp[i * 16 + j]);
-      if (i * 16 + j < 511)
-        printf(",");
     }
     printf("\n");
   }
@@ -70,11 +71,10 @@ main(
 
   printf("static const unsigned char GfLog[256] = {\n");
   for (i = 0; i < 16; ++i) {
-    printf("  ");
+    printf(i == 0 ? "  " : " ,");
     for (j = 0; j < 16; ++j) {
+      if (j > 0) printf(",");
       printf("0x%02x", Log[i * 16 + j]);
-      if (i * 16 + j < 255)
-        printf(",");
     }
     printf("\n");
   }

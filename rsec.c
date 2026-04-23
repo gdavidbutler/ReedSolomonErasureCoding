@@ -56,7 +56,7 @@ static const unsigned char GfExp[512] = {
  ,0x19,0x32,0x64,0xc8,0x8d,0x07,0x0e,0x1c,0x38,0x70,0xe0,0xdd,0xa7,0x53,0xa6,0x51
  ,0xa2,0x59,0xb2,0x79,0xf2,0xf9,0xef,0xc3,0x9b,0x2b,0x56,0xac,0x45,0x8a,0x09,0x12
  ,0x24,0x48,0x90,0x3d,0x7a,0xf4,0xf5,0xf7,0xf3,0xfb,0xeb,0xcb,0x8b,0x0b,0x16,0x2c
- ,0x58,0xb0,0x7d,0xfa,0xe9,0xcf,0x83,0x1b,0x36,0x6c,0xd8,0xad,0x47,0x8e,0x01,0xff
+ ,0x58,0xb0,0x7d,0xfa,0xe9,0xcf,0x83,0x1b,0x36,0x6c,0xd8,0xad,0x47,0x8e,0x01,0x02
 };
 
 static const unsigned char GfLog[256] = {
@@ -78,13 +78,10 @@ static const unsigned char GfLog[256] = {
  ,0x4f,0xae,0xd5,0xe9,0xe6,0xe7,0xad,0xe8,0x74,0xd6,0xf4,0xea,0xa8,0x50,0x58,0xaf
 };
 
-/* GF(2^8) multiplication */
+/* GF(2^8) multiplication; args must be side-effect free */
 #define gfMul(a, b) ((a) == 0 || (b) == 0 ? (unsigned char)0 : GfExp[GfLog[(a)] + GfLog[(b)]])
 
-/* GF(2^8) division */
-#define gfDiv(a, b) ((a) == 0 || (b) == 0 ? (unsigned char)0 : GfExp[GfLog[(a)] + 255 - GfLog[(b)]])
-
-/* GF(2^8) inverse */
+/* GF(2^8) inverse; arg must be nonzero and side-effect free */
 #define gfInv(a) (GfExp[255 - GfLog[(a)]])
 
 int
@@ -153,32 +150,36 @@ rsecDecode(
   unsigned char *Ir;
   unsigned char t;
   unsigned char piv;
-
-  M = w;
-  Inv = w + k * k;
+  unsigned char seen[32]; /* 256-bit presence map for x[] duplicate detection */
 
   if (k < 1 || m < 1 || k + m > 256)
     return (-1);
 
-  /* Check for trivial case: all data shards present */
+  /* Validate x[]: each in [0, k+m) and all distinct; count data indices in j */
+  for (i = 0; i < sizeof (seen) / sizeof (seen[0]); ++i)
+    seen[i] = 0;
   j = 0;
   for (i = 0; i < k; ++i) {
-    if (x[i] < k)
+    ri = x[i];
+    if (ri >= k + m)
+      return (-1);
+    if (seen[ri >> 3] & (1U << (ri & 7)))
+      return (-1);
+    seen[ri >> 3] |= (unsigned char)(1U << (ri & 7));
+    if (ri < k)
       ++j;
   }
+
+  /* Trivial case: x[] is a permutation of [0, k) */
   if (j == k) {
-    /* All data shards present, just copy */
-    for (i = 0; i < k; ++i) {
-      for (j = 0; j < k; ++j) {
-        if (x[j] == i) {
-          for (b = 0; b < l; ++b)
-            d[i][b] = s[j][b];
-          break;
-        }
-      }
-    }
+    for (i = 0; i < k; ++i)
+      for (b = 0; b < l; ++b)
+        d[x[i]][b] = s[i][b];
     return (0);
   }
+
+  M = w;
+  Inv = w + k * k;
 
   /* Build submatrix from received shard indices */
   for (i = 0; i < k; ++i) {

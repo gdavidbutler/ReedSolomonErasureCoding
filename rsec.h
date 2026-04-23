@@ -37,6 +37,10 @@
  * k: number of data shards
  * m: number of parity shards
  * Returns 0 on success, -1 on invalid parameters
+ *
+ * m=1 uses an all-ones (XOR) parity row; this is NOT the same systematic code
+ * as m>=2 with m truncated to 1, so parity bytes are not interchangeable
+ * across different m values.
  */
 int
 rsecEncode(
@@ -53,16 +57,18 @@ rsecEncode(
 /*
  * Decode/reconstruct data from any k shards
  * s: array of k shard pointers (any k of k+m shards)
- * x: array of k shard indices (0..k-1 are data, k..k+m-1 are parity)
- * d: array of k data shard pointers (output)
+ * x: array of k shard indices; each in [0, k+m) and all k distinct
+ *    (0..k-1 are data, k..k+m-1 are parity)
+ * d: array of k data shard pointers (output); must not alias any s[i]
  * l: length of each shard in bytes
  * k: number of data shards
  * m: number of parity shards
  * w: work area, RS_WORK_SIZE(k) bytes
- * Returns 0 on success, -1 on error
+ * Returns 0 on success, -1 on error (bad params, duplicate/out-of-range index,
+ * or singular submatrix)
  *
- * Note: if all k data shards are present (x[i] < k for all i),
- * simply copy s to d; no decode needed
+ * Fast path: if all k data shards are present (x[] is a permutation of [0, k))
+ * the function performs a direct copy with no matrix inversion.
  */
 int
 rsecDecode(

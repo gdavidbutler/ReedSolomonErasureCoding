@@ -2,6 +2,10 @@ CFLAGS=-I. -Os -g
 
 all: rsecTest rsecMkTest
 
+check: rsecTest rsecMkTest
+	./rsecTest
+	./rsecMkTest
+
 clobber: clean
 	rm -f genGfTables rsecTest rsecMkTest
 
