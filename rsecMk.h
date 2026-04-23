@@ -27,9 +27,16 @@
  * Arbitrary shard count n (1..256), internally padded to next power of 2.
  * Proof size is ceil(log2(n)) hashes.
  *
- * Leaf hash: H(0x00 || shard_data)
- * Node hash: H(0x01 || left_child || right_child)
- * The tag byte prefix prevents leaf/node confusion.
+ * Leaf hash:  H(0x00 || shard_data)
+ * Node hash:  H(0x01 || left_child || right_child)
+ * Root hash:  H(0x02 || n_hi || n_lo || inner_root)
+ * The tag byte prefix prevents leaf/node/root confusion. The root commits
+ * to n: a proof valid for (i, n) is not valid for (i, n') when n != n',
+ * so shards cannot be replayed between trees of different sizes that
+ * happen to share a padded-tree structure.
+ *
+ * Caller should zero the tree work area when done; it retains leaf hashes
+ * H(0x00 || shard) for every shard.
  */
 
 /* Hash context for Merkle tree operations */
@@ -96,14 +103,15 @@ rsecMkProof(
  ,unsigned int n                /* number of shards */
  ,unsigned int i                /* shard index (0..n-1) */
  ,const unsigned char *w        /* work area (from rsecMkHash) */
- ,unsigned char *p              /* proof output (rsecMkPfSz) */
+ ,unsigned char *pf             /* proof output (rsecMkPfSz) */
 );
 
 /*
  * Extract root hash from shard and Merkle proof.
  * n must equal the value passed to rsecMkHash and rsecMkProof.
  * Return pointer to root hash in work area, 0 on error.
- * Caller compares returned hash with expected root.
+ * Caller compares returned hash with expected root (use a constant-time
+ * compare if the comparison is security-sensitive).
  */
 unsigned char *
 rsecMkExtract(
@@ -112,7 +120,7 @@ rsecMkExtract(
  ,unsigned int l                /* shard length */
  ,unsigned int i                /* shard index */
  ,unsigned int n                /* total shards */
- ,const unsigned char *p        /* proof (rsecMkPfSz) */
+ ,const unsigned char *pf       /* proof (rsecMkPfSz) */
  ,unsigned char *w              /* work area (rsecMkVfSz) */
 );
 

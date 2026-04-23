@@ -87,6 +87,8 @@ RS encoding requires data to be split into k equal-length shards. If the origina
 
 The hash function is pluggable via `rsecMkHsh_t`, which provides allocate, initialize, update, finalize, and deallocate callbacks plus a hash size parameter h (hash is 2^h bytes).
 
+The root hash commits to `n` (shard count) so proofs cannot be replayed between trees of different sizes. Tag-byte domain separation is used: leaves are `H(0x00 || shard)`, internal nodes are `H(0x01 || L || R)`, and the root is `H(0x02 || n_hi || n_lo || inner_root)`.
+
 ### Build Tree
 
 ```c
@@ -109,7 +111,7 @@ unsigned char *rsecMkProof(
   unsigned int n,                 /* number of shards */
   unsigned int i,                 /* shard index (0..n-1) */
   const unsigned char *w,         /* work area (from rsecMkHash) */
-  unsigned char *p                /* proof output (rsecMkPfSz bytes) */
+  unsigned char *pf               /* proof output (rsecMkPfSz bytes) */
 );
 ```
 
@@ -124,12 +126,12 @@ unsigned char *rsecMkExtract(
   unsigned int l,                 /* shard length */
   unsigned int i,                 /* shard index */
   unsigned int n,                 /* total shards */
-  const unsigned char *p,         /* proof (rsecMkPfSz bytes) */
+  const unsigned char *pf,        /* proof (rsecMkPfSz bytes) */
   unsigned char *w                /* work area (rsecMkVfSz bytes) */
 );
 ```
 
-Returns pointer to computed root hash in work area, 0 on error. Caller compares returned hash with expected root.
+Returns pointer to computed root hash in work area, 0 on error. Caller compares returned hash with the expected root.
 
 ### Size Functions
 

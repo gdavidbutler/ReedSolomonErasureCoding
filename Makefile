@@ -15,8 +15,8 @@ clean:
 rsecTest: test/rsecTest.c rsec.o
 	$(CC) $(CFLAGS) -o rsecTest test/rsecTest.c rsec.o
 
-rsecMkTest: test/rsecMkTest.c rsec.o rsecMk.o ../rmd128/rmd128.o ../canonicalHuffman/huf.o
-	$(CC) $(CFLAGS) -I../rmd128 -I../canonicalHuffman -o rsecMkTest test/rsecMkTest.c rsec.o rsecMk.o ../rmd128/rmd128.o ../canonicalHuffman/huf.o
+rsecMkTest: test/rsecMkTest.c rsec.o rsecMk.o ../rmd128/rmd128.o ../sha256/sha256.o ../canonicalHuffman/huf.o
+	$(CC) $(CFLAGS) -I../rmd128 -I../sha256 -I../canonicalHuffman -o rsecMkTest test/rsecMkTest.c rsec.o rsecMk.o ../rmd128/rmd128.o ../sha256/sha256.o ../canonicalHuffman/huf.o
 
 rsec.o: rsec.c rsec.h
 	$(CC) $(CFLAGS) -c rsec.c
