@@ -1,6 +1,8 @@
 # ReedSolomonErasureCoding
 A small C implementation of Reed-Solomon erasure coding
 
+Generated with Claude Code (https://claude.ai/code)
+
 [Reed-Solomon](https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction) is an error-correcting code that enables recovery of lost data from redundant parity information. Given k data shards and m parity shards, any k of the k+m shards can reconstruct the original data.
 
 This implementation was created to provide small, portable code for memory constrained 32 bit microcontrollers. It uses systematic encoding over GF(2^8) with a Cauchy matrix for parity generation.
