@@ -141,14 +141,10 @@ Returns pointer to computed root hash in work area, 0 on error. Caller compares 
 - `rsecMkPfSz(h, n)` - proof size per shard
 - `rsecMkVfSz(h)` - work area for verification
 
-## thrDsp Adapter
-
-`thrDspRsec.[hc]` exposes `rsec` + `rsecMk` through the threshold-dispersal plugin contract `thrDsp.h` defined in `../asynchronousByzantineAgreementProtocols/` and consumed by that repo's `ct04Dsp` (CT04 AVID-H verifiable information dispersal). The dependency points one way — the adapter includes ABAP's `thrDsp.h` at build time; ABAP has no link-time dependency on this repo beyond the built `thrDspRsec.o`. The `thrDspRsecTest` binary qualifies the adapter against the full vtable contract (`encode`, `verify`, `decode`, `derivedRoot` with optional per-piece proof + reconstructed piece), including a Byzantine-dealer Frankenstein-splice rejection test for `derivedRoot`.
-
 ## Applications
 
 - UDP fragment recovery
-- Distributed storage (including verifiable information dispersal via the `thrDsp` adapter above)
+- Distributed storage
 - Streaming media
 - Backup systems
 - Any scenario requiring erasure tolerance
