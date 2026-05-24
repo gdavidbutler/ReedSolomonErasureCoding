@@ -18,8 +18,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* Generated with Claude Code (https://claude.ai/code) */
-
 #ifndef RSEC_H
 #define RSEC_H
 
