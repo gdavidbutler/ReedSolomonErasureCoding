@@ -98,7 +98,7 @@ rsecEncode(
   unsigned char c;
   unsigned char coef[256];
 
-  if (k < 1 || m < 1 || k + m > 256)
+  if (k < 1 || m < 1 || k > 255 || k + m > 256)
     return (-1);
 
   /* Fast path: single parity is XOR of all data shards */
@@ -152,7 +152,7 @@ rsecDecode(
   unsigned char piv;
   unsigned char seen[32]; /* 256-bit presence map for x[] duplicate detection */
 
-  if (k < 1 || m < 1 || k + m > 256)
+  if (k < 1 || m < 1 || k > 255 || k + m > 256)
     return (-1);
 
   /* Validate x[]: each in [0, k+m) and all distinct; count data indices in j */
