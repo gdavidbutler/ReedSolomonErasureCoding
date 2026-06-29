@@ -165,7 +165,7 @@ rsecDecode(
       return (-1);
     if (seen[ri >> 3] & (1U << (ri & 7)))
       return (-1);
-    seen[ri >> 3] |= (unsigned char)(1U << (ri & 7));
+    seen[ri >> 3] |= (1U << (ri & 7));
     if (ri < k)
       ++j;
   }

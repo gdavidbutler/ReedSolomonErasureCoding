@@ -39,8 +39,8 @@ main(
 
   x = 1;
   for (i = 0; i < 255; ++i) {
-    Exp[i] = (unsigned char)x;
-    Log[x] = (unsigned char)i;
+    Exp[i] = x;
+    Log[x] = i;
     x <<= 1;
     if (x & 0x100)
       x ^= 0x11d;

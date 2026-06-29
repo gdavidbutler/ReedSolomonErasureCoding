@@ -142,8 +142,8 @@ rsecMkHash(
   }
 
   /* bind n to root: slot 0 = H(RootTag || n_hi || n_lo || tree[1]) */
-  nb[0] = (unsigned char)(n >> 8);
-  nb[1] = (unsigned char)(n & 0xff);
+  nb[0] = (n >> 8);
+  nb[1] = (n & 0xff);
   h->i(c);
   h->u(c, &RootTag, 1);
   h->u(c, nb, 2);
@@ -238,8 +238,8 @@ rsecMkExtract(
   }
 
   /* bind n: cur = H(RootTag || n_hi || n_lo || inner_root) */
-  nb[0] = (unsigned char)(n >> 8);
-  nb[1] = (unsigned char)(n & 0xff);
+  nb[0] = (n >> 8);
+  nb[1] = (n & 0xff);
   h->i(c);
   h->u(c, &RootTag, 1);
   h->u(c, nb, 2);
