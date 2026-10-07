@@ -22,9 +22,12 @@
 
 /* Domain separation tags: distinguish leaf, internal-node and root hash
  * inputs. Prefixing rules out leaf/node/root confusion from second-preimage
- * attacks. The root hash additionally commits to the shard count n so
+ * attacks. The root hash additionally commits to the shard count n, so
  * proofs cannot be replayed between trees of different sizes that share
- * the same padded-tree structure. */
+ * the same padded-tree structure, and to the shard length l: a leaf hash
+ * binds bytes, not a length, so without this a tree could carry leaves of
+ * two lengths and each would verify at its own length. A codeword's rows
+ * are one length; the root says which. */
 static const unsigned char LeafTag = 0x00;
 static const unsigned char NodeTag = 0x01;
 static const unsigned char RootTag = 0x02;
@@ -105,6 +108,7 @@ rsecMkHash(
   unsigned char *np;
   unsigned char *cp;
   unsigned char nb[2];
+  unsigned char lb[4];
 
   if (!h || !s || !l || n < 1 || n > 256 || !w
    || !h->a || !h->i || !h->u || !h->f)
@@ -141,12 +145,17 @@ rsecMkHash(
     cp -= b << 1;
   }
 
-  /* bind n to root: slot 0 = H(RootTag || n_hi || n_lo || tree[1]) */
+  /* bind n and l to root: slot 0 = H(RootTag || n_hi || n_lo || l_3 .. l_0 || tree[1]) */
   nb[0] = (n >> 8);
   nb[1] = (n & 0xff);
+  lb[0] = (l >> 24);
+  lb[1] = (l >> 16) & 0xff;
+  lb[2] = (l >> 8) & 0xff;
+  lb[3] = (l & 0xff);
   h->i(c);
   h->u(c, &RootTag, 1);
   h->u(c, nb, 2);
+  h->u(c, lb, 4);
   h->u(c, w + b, b);
   h->f(c, w);
 
@@ -203,6 +212,7 @@ rsecMkExtract(
   const unsigned char *lo;
   const unsigned char *hi;
   unsigned char nb[2];
+  unsigned char lb[4];
 
   if (!h || !s || !l || n < 1 || n > 256 || i >= n || !pf || !w
    || !h->a || !h->i || !h->u || !h->f)
@@ -237,12 +247,17 @@ rsecMkExtract(
     node >>= 1;
   }
 
-  /* bind n: cur = H(RootTag || n_hi || n_lo || inner_root) */
+  /* bind n and l: cur = H(RootTag || n_hi || n_lo || l_3 .. l_0 || inner_root) */
   nb[0] = (n >> 8);
   nb[1] = (n & 0xff);
+  lb[0] = (l >> 24);
+  lb[1] = (l >> 16) & 0xff;
+  lb[2] = (l >> 8) & 0xff;
+  lb[3] = (l & 0xff);
   h->i(c);
   h->u(c, &RootTag, 1);
   h->u(c, nb, 2);
+  h->u(c, lb, 4);
   h->u(c, cur, b);
   h->f(c, cur);
 

@@ -470,6 +470,106 @@ main(
       fail = 1;
   }
 
+  /*
+   * Test 3: two leaf lengths under one root.  rsecMkHash hashes every leaf
+   * at one length, so the tree is built by hand in its layout (leaf at slot
+   * pw + j, node at slot j, root at slot 0; the layout rsecMkProof walks):
+   * leaf 0 at L + 1 bytes, leaves 1 and 2 at L, the root bound at L.  The
+   * root commits the length, so the odd leaf must not verify at its own
+   * length while the others verify at theirs; bound at L + 1 instead, the
+   * odd leaf verifies and the others must not.  No root admits both.
+   */
+  printf("\nTest 3: two leaf lengths under one root (rmd128)\n");
+  {
+    enum { L = 8, N3 = 3, PW = 4 };
+    unsigned char leaf[N3][L + 1];
+    unsigned char lens[2];
+    unsigned char tag;
+    unsigned char nb[2];
+    unsigned char lb[4];
+    unsigned char *w;
+    unsigned char *pf;
+    unsigned char *vf;
+    unsigned char *x;
+    void *hc;
+    unsigned int b;
+    unsigned int bound;
+    unsigned int k;
+
+    b = 1U << Hrmd.h;
+    for (i = 0; i < N3; ++i)
+      for (j = 0; j < L + 1; ++j)
+        leaf[i][j] = i * 53 + j;
+    lens[0] = L + 1;                   /* leaf 0 is the odd one */
+    lens[1] = L;
+    w = malloc(rsecMkWaSz(Hrmd.h, N3));
+    pf = malloc(rsecMkPfSz(Hrmd.h, N3));
+    vf = malloc(rsecMkVfSz(Hrmd.h));
+    hc = Hrmd.a();
+    if (!w || !pf || !vf || !hc) {
+      fprintf(stderr, "malloc\n");
+      return (1);
+    }
+    for (bound = L; bound <= L + 1; ++bound) {
+      for (j = 0; j < PW; ++j) {
+        if (j >= N3) {
+          memset(w + (PW + j) * b, 0, b);
+          continue;
+        }
+        tag = 0x00;
+        Hrmd.i(hc);
+        Hrmd.u(hc, &tag, 1);
+        Hrmd.u(hc, leaf[j], lens[j ? 1 : 0]);
+        Hrmd.f(hc, w + (PW + j) * b);
+      }
+      for (j = PW - 1; j; --j) {
+        tag = 0x01;
+        Hrmd.i(hc);
+        Hrmd.u(hc, &tag, 1);
+        Hrmd.u(hc, w + 2 * j * b, b << 1);
+        Hrmd.f(hc, w + j * b);
+      }
+      tag = 0x02;
+      nb[0] = N3 >> 8;
+      nb[1] = N3 & 0xff;
+      lb[0] = bound >> 24;
+      lb[1] = (bound >> 16) & 0xff;
+      lb[2] = (bound >> 8) & 0xff;
+      lb[3] = bound & 0xff;
+      Hrmd.i(hc);
+      Hrmd.u(hc, &tag, 1);
+      Hrmd.u(hc, nb, 2);
+      Hrmd.u(hc, lb, 4);
+      Hrmd.u(hc, w + b, b);
+      Hrmd.f(hc, w);
+      /* each leaf verified at its own length: exactly the leaves committed
+       * at the bound length may pass */
+      for (k = 0; k < N3; ++k) {
+        unsigned int own;
+        int pass;
+
+        own = lens[k ? 1 : 0];
+        if (!rsecMkProof(&Hrmd, N3, k, w, pf)) {
+          fprintf(stderr, "rsecMkProof\n");
+          return (1);
+        }
+        x = rsecMkExtract(&Hrmd, leaf[k], own, k, N3, pf, vf);
+        pass = x && !memcmp(x, w, b);
+        if (pass != (own == bound)) {
+          printf("  root bound at %u, leaf %u at %u: %s: FAIL\n", bound, k, own
+                ,pass ? "verified" : "refused");
+          fail = 1;
+        } else
+          printf("  root bound at %u, leaf %u at %u: %s: PASS\n", bound, k, own
+                ,pass ? "verified" : "refused");
+      }
+    }
+    Hrmd.d(hc);
+    free(w);
+    free(pf);
+    free(vf);
+  }
+
   printf("\nAll tests completed%s.\n", fail ? " with FAILURES" : "");
   return (fail);
 }

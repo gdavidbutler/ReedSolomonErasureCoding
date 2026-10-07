@@ -89,7 +89,7 @@ RS encoding requires data to be split into k equal-length shards. If the origina
 
 The hash function is pluggable via `rsecMkHsh_t`, which provides allocate, initialize, update, finalize, and deallocate callbacks plus a hash size parameter h (hash is 2^h bytes).
 
-The root hash commits to `n` (shard count) so proofs cannot be replayed between trees of different sizes. Tag-byte domain separation is used: leaves are `H(0x00 || shard)`, internal nodes are `H(0x01 || L || R)`, and the root is `H(0x02 || n_hi || n_lo || inner_root)`.
+The root hash commits to `n` (shard count) so proofs cannot be replayed between trees of different sizes, and to `l` (shard length) so a tree cannot carry leaves of two lengths that each verify at their own: a leaf hash binds bytes, not a length, and a codeword's rows are one length. Tag-byte domain separation is used: leaves are `H(0x00 || shard)`, internal nodes are `H(0x01 || L || R)`, and the root is `H(0x02 || n_hi || n_lo || l_3 || l_2 || l_1 || l_0 || inner_root)`.
 
 ### Build Tree
 

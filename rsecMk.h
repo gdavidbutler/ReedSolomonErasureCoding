@@ -29,11 +29,17 @@
  *
  * Leaf hash:  H(0x00 || shard_data)
  * Node hash:  H(0x01 || left_child || right_child)
- * Root hash:  H(0x02 || n_hi || n_lo || inner_root)
+ * Root hash:  H(0x02 || n_hi || n_lo || l_3 || l_2 || l_1 || l_0 || inner_root)
  * The tag byte prefix prevents leaf/node/root confusion. The root commits
  * to n: a proof valid for (i, n) is not valid for (i, n') when n != n',
  * so shards cannot be replayed between trees of different sizes that
- * happen to share a padded-tree structure.
+ * happen to share a padded-tree structure. The root also commits to the
+ * shard length l (big-endian, 4 bytes): a leaf hash binds bytes, not a
+ * length, so a tree whose leaves were committed at two lengths would
+ * otherwise verify each leaf at its own length. A codeword's rows are
+ * one length, and the root says which; a verifier passes the length of
+ * the shard it holds and the root agrees only if that is the committed
+ * length.
  *
  * Caller should zero the tree work area when done; it retains leaf hashes
  * H(0x00 || shard) for every shard.
