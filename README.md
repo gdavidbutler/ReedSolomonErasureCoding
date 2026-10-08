@@ -14,6 +14,7 @@ This implementation was created to provide small, portable code for memory const
 - No recursion
 - No dependencies beyond standard C
 - Maximum 256 total shards (k + m <= 256)
+- No parity (m=0) is the rate-1 code: the k data shards alone
 - XOR fast path for single parity (m=1)
 
 ## API

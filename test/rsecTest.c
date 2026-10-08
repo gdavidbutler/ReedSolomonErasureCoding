@@ -219,6 +219,38 @@ main(
     }
   }
 
+  /* Test 6: m=0, the rate-1 code: encode reads no parity, decode is the
+   * copy of all k data shards, and a parity index is refused */
+  printf("\nTest 6: m=0 (no parity) encode, decode, and a refused parity index\n");
+  {
+    int fail6;
+
+    fail6 = 0;
+    Err = rsecEncode(Dp, 0, 16, sizeof (Data) / sizeof (Data[0]), 0);
+    if (Err) {
+      printf("  FAIL: encode refused m=0: %d\n", Err);
+      fail6 = 1;
+    }
+    for (i = 0; i < sizeof (Data) / sizeof (Data[0]); ++i) {
+      Sp[i] = Data[i];
+      Idx[i] = (unsigned char)i;
+    }
+    memset(Recovered, 0, sizeof (Recovered));
+    Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Data) / sizeof (Data[0]), 0, Work);
+    if (Err || memcmp(Recovered, Data, sizeof (Data))) {
+      printf("  FAIL: decode of all data at m=0: %d\n", Err);
+      fail6 = 1;
+    }
+    Idx[2] = sizeof (Data) / sizeof (Data[0]);   /* a parity index: none exist at m=0 */
+    Err = rsecDecode(Sp, Idx, Rp, 16, sizeof (Data) / sizeof (Data[0]), 0, Work);
+    if (!Err) {
+      printf("  FAIL: decode admitted a parity index at m=0\n");
+      fail6 = 1;
+    }
+    printf(fail6 ? "  FAIL\n" : "  PASS\n");
+    Fail |= fail6;
+  }
+
   printf("\nAll tests completed%s.\n", Fail ? " with FAILURES" : "");
   return (Fail);
 }

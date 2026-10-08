@@ -25,7 +25,8 @@
  * Reed-Solomon erasure coding over GF(2^8)
  *
  * Maximum shards (k + m <= 256 for GF(2^8))
- * Systematic encoding: k data shards + m parity shards
+ * Systematic encoding: k data shards + m parity shards (m=0 is the rate-1
+ * code: the k data shards alone, nothing derived)
  * Any k of (k+m) shards can reconstruct original data
  */
 
@@ -35,7 +36,7 @@
  * p: array of m parity shard pointers (output)
  * l: length of each shard in bytes
  * k: number of data shards
- * m: number of parity shards
+ * m: number of parity shards (0: nothing to encode, p is not read)
  * Returns 0 on success, -1 on invalid parameters
  *
  * m=1 uses an all-ones (XOR) parity row; this is NOT the same systematic code
